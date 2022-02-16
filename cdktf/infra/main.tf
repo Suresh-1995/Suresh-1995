@@ -27,14 +27,14 @@ import {
 import * as dotenv from 'dotenv'
 dotenv.config({ path: '.env' })
 
-class baseinfra extends TerraformStack {
+class prodinfra extends TerraformStack {
   constructor(scope: Construct, name: string) {
     super(scope, name)
 
     new AwsProvider(this, 'infra-provider', {
-      region: process.env.AWS_DEFAULT_REGION || '',
-      accessKey: process.env.AWS_ACCESS_KEY_ID || '',
-      secretKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+      region: process.env.PROD_AWS_DEFAULT_REGION || '',
+      accessKey: process.env.PROD_AWS_ACCESS_KEY_ID || '',
+      secretKey: process.env.PROD_AWS_SECRET_ACCESS_KEY || '',
     })
     // created a vpc with 2 public & private subnets
     const vpc = new Vpc(this, 'cdktf-vpc', {
@@ -179,7 +179,7 @@ class baseinfra extends TerraformStack {
       ami: variables.HEADERS.ami,
       rootBlockDevice: { deleteOnTermination: true, volumeSize: 50, volumeType: 'gp2' },
       dependsOn: [runner],
-      tags: { Name: 'mono-runner' },
+      tags: { Name: 'prod-runner' },
     })
     // creating new jumphost instance
     new Instance(this, 'jump-instance', {
@@ -191,16 +191,11 @@ class baseinfra extends TerraformStack {
       ami: variables.HEADERS.ami,
       rootBlockDevice: { deleteOnTermination: true, volumeSize: 10, volumeType: 'gp2' },
       dependsOn: [jumpsg],
-      tags: { Name: 'new-jumphost' },
+      tags: { Name: 'prod-jumphost' },
     })
     // creating ACM
     new AcmCertificate(this, 'cert', {
       domainName: variables.HEADERS.domain_name,
-      validationMethod: 'DNS',
-    })
-    // creating new ACM
-    new AcmCertificate(this, 'new-cert', {
-      domainName: variables.HEADERS.new_domain_name,
       validationMethod: 'DNS',
     })
     // creating db subnet group and aurora-postgresql db cluster
@@ -214,8 +209,8 @@ class baseinfra extends TerraformStack {
       engineVersion: variables.HEADERS.rds_engine_ver,
       skipFinalSnapshot: true,
       databaseName: variables.HEADERS.rds_dbname,
-      masterUsername: process.env.DB_USERNAME,
-      masterPassword: process.env.DB_PASSWORD,
+      masterUsername: process.env.PROD_DB_USERNAME,
+      masterPassword: process.env.PROD_DB_PASSWORD,
       vpcSecurityGroupIds: [rdssg.id],
       dbSubnetGroupName: dbsub.name,
       storageEncrypted: true,
@@ -268,34 +263,6 @@ class baseinfra extends TerraformStack {
         ],
       }),
     })
-    new IamRole(this, `newcognito`, {
-      name: `newamplifysms`,
-      inlinePolicy: [
-        {
-          name: 'newamplifycognito',
-          policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-              {
-                Effect: 'Allow',
-                Action: ['sns:publish'],
-                Resource: '*',
-              },
-            ],
-          }),
-        },
-      ],
-      assumeRolePolicy: JSON.stringify({
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Action: 'sts:AssumeRole',
-            Effect: 'Allow',
-            Principal: { Service: 'cognito-idp.amazonaws.com' },
-          },
-        ],
-      }),
-    })
     const group = new IamGroup(this, 'devgroup', {
       name: 'Amplify-dev-group',
     })
@@ -320,6 +287,7 @@ class baseinfra extends TerraformStack {
       name: 'members',
       users: [siva.name, harsha.name, satya.name, mateus.name, osmar.name],
     })
+
     // attaching policy to dev-team group
     new IamPolicyAttachment(this, 'rds-read', {
       name: 'rds',
@@ -369,11 +337,11 @@ class baseinfra extends TerraformStack {
     })
     // creating s3 full access user for backend
     const s3access = new IamUser(this, 's3access', {
-      name: 's3fullaccess',
+      name: 's3prodfullaccess',
     })
     new IamPolicyAttachment(this, 's3full', {
       name: 's3access',
-      users: ['s3fullaccess'],
+      users: ['s3prodfullaccess'],
       policyArn: 'arn:aws:iam::aws:policy/AmazonS3FullAccess',
       dependsOn: [s3access],
     })
@@ -386,10 +354,6 @@ class baseinfra extends TerraformStack {
       value: 'test',
     })
     output.addOverride('value', '${aws_acm_certificate.cert.domain_validation_options}')
-    const newcname = new TerraformOutput(this, 'new-cname', {
-      value: 'test',
-    })
-    newcname.addOverride('value', '${aws_acm_certificate.new-cert.domain_validation_options}')
     new TerraformOutput(this, 'sivapassword', {
       value: sivaprofile.encryptedPassword,
     })
@@ -399,19 +363,20 @@ class baseinfra extends TerraformStack {
     new TerraformOutput(this, 'satyapassword', {
       value: satyaprofile.encryptedPassword,
     })
-    new TerraformOutput(this, 's3secret', {
-      value: access.encryptedSecret,
-    })
     new TerraformOutput(this, 'mateuspassword', {
       value: mateusprofile.encryptedPassword,
     })
     new TerraformOutput(this, 'osmarpassword', {
       value: osmarprofile.encryptedPassword,
     })
+    new TerraformOutput(this, 's3secret', {
+      value: access.encryptedSecret,
+    })
+
   }
 }
 
 const app = new App()
-new baseinfra(app, 'infra')
+new prodinfra(app, 'infra')
 app.synth()
 
