@@ -10,8 +10,7 @@ import {
   RouteTableAssociation,
   SecurityGroup,
   Subnet,
-  Vpc,
-} from '@cdktf/provider-aws/lib/vpc'
+ } from '@cdktf/provider-aws/lib/vpc'
 import { Eip, Instance } from '@cdktf/provider-aws/lib/ec2'
 import { AcmCertificate } from '@cdktf/provider-aws/lib/acm'
 import { DbSubnetGroup, RdsCluster, RdsClusterInstance } from '@cdktf/provider-aws/lib/rds'
