@@ -3,7 +3,7 @@ name: testing calling variables and secrets
 on:
   push:
     branches:
-      - test-reusability
+      - test-resuability
 
 jobs:
   test-vars:
@@ -11,7 +11,7 @@ jobs:
     environment: test
     steps:
       - name: Checkout code
-        uses: actions/checkout@test-reusability
+        uses: actions/checkout@test-resuability
       - name: printing env and repo vars
         run: |
           echo environment_var="${{ vars.ENV_VARS }}"
