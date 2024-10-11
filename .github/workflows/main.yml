@@ -8,11 +8,7 @@ on:
 jobs:
   test-vars:
     runs-on: ubuntu-latest
-    environment: ${{ 
-      github.ref_name == 'main' && 'test' || 
-      github.ref_name == 'develop' && 'development' || 
-      github.ref_name == 'stage' && 'staging' || 
-    }}
+    environment: ${{ github.ref_name == 'main' && 'test' || github.ref_name == 'develop' && 'development' || github.ref_name == 'stage' && 'staging' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
