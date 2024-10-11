@@ -3,7 +3,7 @@ name: testing calling variables and secrets
 on:
   push:
     branches:
-      - test
+      - test-reusability
 
 jobs:
   test-vars:
