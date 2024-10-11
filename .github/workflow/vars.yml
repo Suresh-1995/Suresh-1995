@@ -1,0 +1,20 @@
+name: testing calling variables and secrets
+
+on:
+  push:
+    branches:
+      - test
+
+jobs:
+  test-vars:
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@test-reusability
+      - name: printing env and repo vars
+        run: |
+          echo environment_var="${{ vars.ENV_VARS }}"
+          echo repo_var="${{ vars.REPO_VARS }}"
+          echo repo_secret="${{ secrets.REPO_SECRET }}"
+          echo env_secretr="${{ secrets.ENV_SECRET }}"
